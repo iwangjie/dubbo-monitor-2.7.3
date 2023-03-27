@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dubbo-monitor
+spec:
+  selector:
+    matchLabels:
+      app: dubbo-monitor
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: dubbo-monitor
+    spec:
+      containers:
+        - name: dubbo-monitor
+          image: your-image:tag
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 20888
+            - containerPort: 8088
+      env:
+        - name: TZ
+          value: Asia/Shanghai
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: dubbo-monitor
+spec:
+  selector:
+    app: dubbo-monitor
+  ports:
+    - name: dubbo
+      port: 20888
+    - name: http
+      port: 8088
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dubbo-monitor
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    - host: dev-dubbo-monitor.k8s-ingresses.serviceshare.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dubbo-monitor
+                port:
+                  name: http
+
